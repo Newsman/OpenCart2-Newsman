@@ -5,15 +5,29 @@ class ControllerCommonNewsmanremarketing extends Controller
 	protected function getCategoryPath($category_id)
 	{
 		$path = '';
-		$category = $this->model_catalog_category->getCategory($category_id);
 
+//afiseaza ambele
+		$category = $this->model_catalog_category->getCategory($category_id);
+		$subcategories = $this->model_catalog_category->getCategories($category_id);
+
+//getCategoryPath, ia numai categoria
 		if ($category['parent_id'] != 0)
 		{
 			$path .= $this->getCategoryPath($category['parent_id']) . ' / ';
 		}
-
 		$path .= $category['name'];
+
+		//afiseaza subcategoriile cu foreach
+		if (!empty($subcategories))
+		{
+			foreach ($subcategories as $subcategory)
+			{
+				$path .= ', ' . $subcategory['name'];
+			}
+		}
+//..mai trebuie, este codul final, rerturneaza si cat si subcat.
 		return $path;
+
 	}
 
 	// Maps Opencart product data to Google Analytics product structure
@@ -37,7 +51,7 @@ class ControllerCommonNewsmanremarketing extends Controller
 		}
 		*/
 
-		// get category path	
+		// get category path
 		$oc_categories = $this->model_catalog_product->getCategories($product["product_id"]);
 		$oc_category = [];
 		if (sizeof($oc_categories) > 0)
@@ -104,7 +118,7 @@ class ControllerCommonNewsmanremarketing extends Controller
 		$endpoint = "https://retargeting.newsmanapp.com/js/retargeting/track.js";
 		$endpointHost = "https://retargeting.newsmanapp.com";
 		$domain = $_SERVER['SERVER_NAME'];
-		
+
 		$tag = "";
 
 		// get Route
@@ -127,11 +141,11 @@ class ControllerCommonNewsmanremarketing extends Controller
 				var _nzmPluginInfo = '1.6:opencart2.0.x';
                 //Newsman remarketing tracking code REPLACEABLE
 
-				//Newsman remarketing tracking code  
+				//Newsman remarketing tracking code
 
 				var endpoint = 'https://retargeting.newsmanapp.com';
 				var remarketingEndpoint = endpoint + '/js/retargeting/track.js';
-				
+
 				var _nzm = _nzm || [];
 				var _nzm_config = _nzm_config || [];
 				_nzm_config['disable_datalayer'] = 1;
@@ -153,7 +167,7 @@ class ControllerCommonNewsmanremarketing extends Controller
 					script_dom.id = 'nzm-tracker';
 					script_dom.setAttribute('data-site-id', remarketingid);
 					script_dom.src = remarketingEndpoint;
-				
+
 					if (_nzmPluginInfo.indexOf('shopify') !== -1) {
 						script_dom.onload = function(){
 							if (typeof newsmanRemarketingLoad === 'function')
@@ -163,9 +177,9 @@ class ControllerCommonNewsmanremarketing extends Controller
 					s.parentNode.insertBefore(script_dom, s);
 				})();
 				_nzm.run('require', 'ec');
-				
-				//Newsman remarketing tracking code   
-                
+
+				//Newsman remarketing tracking code
+
                 //Newsman remarketing auto events REPLACEABLE
 				var ajaxurl = '/index.php?route=module/newsman_import&newsman=getCart.json';
                 //Newsman remarketing auto events REPLACEABLE
@@ -460,7 +474,7 @@ TAG;
 				case "checkout/cart":
 
 					$tag .= "
-					<script>		
+					<script>
 					</script>
 					";
 
@@ -561,7 +575,7 @@ TAG;
 			$purchase_event = null;
 			$products_event = null;
 			$email = "";
-			$firstname = ""; 
+			$firstname = "";
 			$lastname = "";
 
 			if (isset($this->session->data['ga_orderDetails']))
@@ -580,15 +594,15 @@ TAG;
 					foreach ($this->session->data['ga_orderProducts'] as $product)
 						array_push($ob_products, $this->getProduct($order_id, $product));
 				}
-				
+
 				foreach($ob_products as $item){
-					$products_event .= 
+					$products_event .=
 						"_nzm.run( 'ec:addProduct', {" .
-							"'id': '" . $item["id"] . "'," . 
-							"'name': '" . $item["name"] . "'," . 
-							"'category': '" . $item["category"] . "'," . 
-							"'price': '" . $item["price"] . "'," . 
-							"'quantity': '" . $item["quantity"] . "'," . 
+							"'id': '" . $item["id"] . "'," .
+							"'name': '" . $item["name"] . "'," .
+							"'category': '" . $item["category"] . "'," .
+							"'price': '" . $item["price"] . "'," .
+							"'quantity': '" . $item["quantity"] . "'," .
 						"} );";
 				}
 
@@ -602,7 +616,7 @@ TAG;
 					"revenue" => (float)$orderDetails["total"],
 					"tax" => (float)$this->getTax($order_totals),
 					"shipping" => (float)$this->getShipping($order_totals)
-				];	
+				];
 
 				$purchase_event = json_encode($ob_order);
 			}
@@ -616,7 +630,7 @@ TAG;
 				var _nzmPluginInfo = '1.6:opencart2.0.x';
                 //Newsman remarketing tracking code REPLACEABLE
 
-				//Newsman remarketing tracking code  
+				//Newsman remarketing tracking code
 
 				var endpoint = 'https://retargeting.newsmanapp.com';
 				var remarketingEndpoint = endpoint + '/js/retargeting/track.js';
@@ -653,8 +667,8 @@ TAG;
 				})();
 				_nzm.run('require', 'ec');
 
-				//Newsman remarketing tracking code      
-                
+				//Newsman remarketing tracking code
+
                 //Newsman remarketing auto events REPLACEABLE
 				var ajaxurl = '/index.php?route=module/newsman_import&newsman=getCart.json';
                 //Newsman remarketing auto events REPLACEABLE
@@ -902,7 +916,7 @@ TAG;
 					}
 					;
 				}
-		
+
 				//Newsman remarketing auto events
 
 TAG;
@@ -917,7 +931,7 @@ TAG;
 
 			unset($this->session->data['ga_orderDetails']);
 			unset($this->session->data['ga_orderProducts']);
-			
+
 			//$data["tag"] = $tag;
 			//return $this->load->view('common/newsmanremarketing.tpl', $data);
 		}
