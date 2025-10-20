@@ -14,7 +14,7 @@ To install manually, please follow these steps:
 # Newsman Remarketing
 
 To set up NewsMAN Remarketing, follow these steps:
-1. Navigate to Extensions -> Installer -> Upload NewsMANremarketing.ocmod.xml.
+1. Navigate to Extensions -> Installer -> Upload NewsMANremarketing.ocmod.
 2. Refresh the modifications by going to Extensions -> Modifications -> Refresh
 3. Access Extensions -> Analytics -> NewsMAN Remarketing.
 
