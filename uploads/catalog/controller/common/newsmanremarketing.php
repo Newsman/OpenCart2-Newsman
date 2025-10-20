@@ -2,32 +2,66 @@
 
 class ControllerCommonNewsmanremarketing extends Controller
 {
+	private function getDeepestCategoryId()
+	{
+		if (!empty($this->request->get['path'])) {
+			$parts = explode('_', (string)$this->request->get['path']);
+			return (int)array_pop($parts);
+		}
+
+		if (!empty($this->request->get['product_id'])) {
+			$this->load->model('catalog/product');
+			$cats = $this->model_catalog_product->getCategories((int)$this->request->get['product_id']);
+
+			if ($cats) {
+				$deepestId = 0;
+				$deepestLevel = -1;
+
+				foreach ($cats as $c) {
+					$level = $this->getCategoryDepth((int)$c['category_id']);
+					if ($level > $deepestLevel) {
+						$deepestLevel = $level;
+						$deepestId = (int)$c['category_id'];
+					}
+				}
+
+				return $deepestId;
+			}
+		}
+
+		return 0;
+	}
+
+	private function getCategoryDepth($category_id)
+	{
+		$query = $this->db->query("SELECT MAX(level) AS depth 
+                               FROM " . DB_PREFIX . "category_path 
+                               WHERE category_id = '" . (int)$category_id . "'");
+		return isset($query->row['depth']) ? (int)$query->row['depth'] : 0;
+	}
+
 	protected function getCategoryPath($category_id)
 	{
 		$path = '';
 
-//afiseaza ambele
+		//afiseaza ambele
 		$category = $this->model_catalog_category->getCategory($category_id);
 		$subcategories = $this->model_catalog_category->getCategories($category_id);
 
-//getCategoryPath, ia numai categoria
-		if ($category['parent_id'] != 0)
-		{
+		//getCategoryPath, ia numai categoria
+		if ($category['parent_id'] != 0) {
 			$path .= $this->getCategoryPath($category['parent_id']) . ' / ';
 		}
 		$path .= $category['name'];
 
 		//afiseaza subcategoriile cu foreach
-		if (!empty($subcategories))
-		{
-			foreach ($subcategories as $subcategory)
-			{
+		if (!empty($subcategories)) {
+			foreach ($subcategories as $subcategory) {
 				$path .= ', ' . $subcategory['name'];
 			}
 		}
-//..mai trebuie, este codul final, rerturneaza si cat si subcat.
+		//..mai trebuie, este codul final, rerturneaza si cat si subcat.
 		return $path;
-
 	}
 
 	// Maps Opencart product data to Google Analytics product structure
@@ -54,14 +88,11 @@ class ControllerCommonNewsmanremarketing extends Controller
 		// get category path
 		$oc_categories = $this->model_catalog_product->getCategories($product["product_id"]);
 		$oc_category = [];
-		if (sizeof($oc_categories) > 0)
-		{
+		if (sizeof($oc_categories) > 0) {
 			$oc_category = $this->model_catalog_category->getCategory($oc_categories[0]["category_id"]);
-			if (sizeof($oc_category) > 0)
-			{
+			if (sizeof($oc_category) > 0) {
 				$oc_category["path"] = $this->getCategoryPath($oc_category['category_id']);
-			} else
-			{
+			} else {
 				$oc_category["path"] = '';
 			}
 		}
@@ -86,10 +117,8 @@ class ControllerCommonNewsmanremarketing extends Controller
 	protected function getShipping($totals)
 	{
 		$shipping = 0.00;
-		foreach ($totals as $total)
-		{
-			if ($total["code"] == 'shipping')
-			{
+		foreach ($totals as $total) {
+			if ($total["code"] == 'shipping') {
 				$shipping += $total["value"];
 			}
 		}
@@ -100,10 +129,8 @@ class ControllerCommonNewsmanremarketing extends Controller
 	protected function getTax($totals)
 	{
 		$tax = 0.00;
-		foreach ($totals as $total)
-		{
-			if ($total["code"] == 'tax')
-			{
+		foreach ($totals as $total) {
+			if ($total["code"] == 'tax') {
 				$tax += $total["value"];
 			}
 		}
@@ -112,7 +139,7 @@ class ControllerCommonNewsmanremarketing extends Controller
 
 
 	public function index()
-	{
+	{die('fsadsa');
 		$this->load->model('checkout/order');
 
 		$endpoint = "https://retargeting.newsmanapp.com/js/retargeting/track.js";
@@ -123,8 +150,7 @@ class ControllerCommonNewsmanremarketing extends Controller
 
 		// get Route
 		$route = '';
-		if (isset($this->request->get['route']))
-		{
+		if (isset($this->request->get['route'])) {
 			$route = (string)$this->request->get['route'];
 		}
 
@@ -132,8 +158,7 @@ class ControllerCommonNewsmanremarketing extends Controller
 		$tracking_id = $this->config->get('analytics_newsmanremarketing_trackingid');
 
 		// If not Purchase
-		if ($route != 'checkout/success')
-		{
+		if ($route != 'checkout/success') {
 			$tag .= <<<TAG
 				<script>
                 //Newsman remarketing tracking code REPLACEABLE
@@ -435,8 +460,7 @@ class ControllerCommonNewsmanremarketing extends Controller
 				</script>
 TAG;
 
-			switch ($route)
-			{
+			switch ($route) {
 				case "product/product":
 					$this->load->model('catalog/product');
 					$this->load->model('catalog/category');
@@ -447,14 +471,11 @@ TAG;
 					$oc_product = $this->model_catalog_product->getProduct($id);
 					$oc_categories = $this->model_catalog_product->getCategories($id);
 					$oc_category = [];
-					if (sizeof($oc_categories) > 0)
-					{
+					if (sizeof($oc_categories) > 0) {
 						$oc_category = $this->model_catalog_category->getCategory($oc_categories[0]["category_id"]);
-						if (sizeof($oc_category) > 0)
-						{
+						if (sizeof($oc_category) > 0) {
 							$oc_category["path"] = $this->getCategoryPath($oc_category['category_id']);
-						} else
-						{
+						} else {
 							$oc_category["path"] = '';
 						}
 					}
@@ -464,7 +485,7 @@ TAG;
 					_nzm.run('ec:addProduct', {
                     'id': " . $oc_product['product_id'] . ",
                     'name': '" . $oc_product['name'] . "',
-                    'category': '" . $oc_category['path'] . "',
+                    'category': '" . $oc_category["path"] . "',
                     price: " . $oc_product['price'] . ",
                     list: 'Product Page'});_nzm.run('ec:setAction', 'detail');
 					</script>
@@ -487,18 +508,14 @@ TAG;
 
 					$products = $this->cart->getProducts();
 
-					foreach ($products as $item)
-					{
+					foreach ($products as $item) {
 						$oc_categories = $this->model_catalog_product->getCategories($item["product_id"]);
 						$oc_category = [];
-						if (sizeof($oc_categories) > 0)
-						{
+						if (sizeof($oc_categories) > 0) {
 							$oc_category = $this->model_catalog_category->getCategory($oc_categories[0]["category_id"]);
-							if (sizeof($oc_category) > 0)
-							{
+							if (sizeof($oc_category) > 0) {
 								$oc_category["path"] = $this->getCategoryPath($oc_category['category_id']);
-							} else
-							{
+							} else {
 								$oc_category["path"] = '';
 							}
 						}
@@ -522,18 +539,14 @@ TAG;
 
 					$pos = 1;
 
-					foreach ($prod as $item)
-					{
+					foreach ($prod as $item) {
 						$oc_categories = $this->model_catalog_product->getCategories($item["product_id"]);
 						$oc_category = [];
-						if (sizeof($oc_categories) > 0)
-						{
+						if (sizeof($oc_categories) > 0) {
 							$oc_category = $this->model_catalog_category->getCategory($oc_categories[0]["category_id"]);
-							if (sizeof($oc_category) > 0)
-							{
+							if (sizeof($oc_category) > 0) {
 								$oc_category["path"] = $this->getCategoryPath($oc_category['category_id']);
-							} else
-							{
+							} else {
 								$oc_category["path"] = '';
 							}
 						}
@@ -568,18 +581,15 @@ _nzm.run('send', 'pageview');
 </script>
 
 TAG;
-
 		} // Purchase
-		else
-		{
+		else {
 			$purchase_event = null;
 			$products_event = null;
 			$email = "";
 			$firstname = "";
 			$lastname = "";
 
-			if (isset($this->session->data['ga_orderDetails']))
-			{
+			if (isset($this->session->data['ga_orderDetails'])) {
 				$orderDetails = $this->session->data['ga_orderDetails'];
 
 				$order_id = $orderDetails["order_id"];
@@ -589,20 +599,19 @@ TAG;
 				$order_totals = $orderDetails["total"];
 
 				$ob_products = [];
-				if (isset($this->session->data['ga_orderProducts']))
-				{
+				if (isset($this->session->data['ga_orderProducts'])) {
 					foreach ($this->session->data['ga_orderProducts'] as $product)
 						array_push($ob_products, $this->getProduct($order_id, $product));
 				}
 
-				foreach($ob_products as $item){
+				foreach ($ob_products as $item) {
 					$products_event .=
 						"_nzm.run( 'ec:addProduct', {" .
-							"'id': '" . $item["id"] . "'," .
-							"'name': '" . $item["name"] . "'," .
-							"'category': '" . $item["category"] . "'," .
-							"'price': '" . $item["price"] . "'," .
-							"'quantity': '" . $item["quantity"] . "'," .
+						"'id': '" . $item["id"] . "'," .
+						"'name': '" . $item["name"] . "'," .
+						"'category': '" . $item["category"] . "'," .
+						"'price': '" . $item["price"] . "'," .
+						"'quantity': '" . $item["quantity"] . "'," .
 						"} );";
 				}
 
@@ -939,5 +948,3 @@ TAG;
 		return $tag;
 	}
 }
-
-?>
