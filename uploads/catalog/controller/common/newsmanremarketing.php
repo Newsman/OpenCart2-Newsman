@@ -11,13 +11,13 @@ class ControllerCommonNewsmanremarketing extends Controller
 
 		if (!empty($this->request->get['product_id'])) {
 			$this->load->model('catalog/product');
-			$cats = $this->model_catalog_product->getCategories((int)$this->request->get['product_id']);
+			$CategoryDepthLevel = $this->model_catalog_product->getCategories((int)$this->request->get['product_id']);
 
-			if ($cats) {
+			if ($CategoryDepthLevel) {
 				$deepestId = 0;
 				$deepestLevel = -1;
 
-				foreach ($cats as $c) {
+				foreach ($CategoryDepthLevel as $c) {
 					$level = $this->getCategoryDepth((int)$c['category_id']);
 					if ($level > $deepestLevel) {
 						$deepestLevel = $level;
@@ -34,8 +34,8 @@ class ControllerCommonNewsmanremarketing extends Controller
 
 	private function getCategoryDepth($category_id)
 	{
-		$query = $this->db->query("SELECT MAX(level) AS depth 
-                               FROM " . DB_PREFIX . "category_path 
+		$query = $this->db->query("SELECT MAX(level) AS depth
+                               FROM " . DB_PREFIX . "category_path
                                WHERE category_id = '" . (int)$category_id . "'");
 		return isset($query->row['depth']) ? (int)$query->row['depth'] : 0;
 	}
@@ -139,7 +139,7 @@ class ControllerCommonNewsmanremarketing extends Controller
 
 
 	public function index()
-	{die('fsadsa');
+	{die('');
 		$this->load->model('checkout/order');
 
 		$endpoint = "https://retargeting.newsmanapp.com/js/retargeting/track.js";
